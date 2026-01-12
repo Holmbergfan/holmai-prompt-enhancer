@@ -2,6 +2,7 @@ import base64
 import io
 import os
 import time
+import shutil
 from typing import Optional
 
 import requests
@@ -28,6 +29,48 @@ TORCH_DTYPE = os.getenv("TORCH_DTYPE", "auto")
 MODEL = None
 PROCESSOR = None
 SYSTEM_PROMPT_CACHE: Optional[str] = None
+
+
+def resolve_storage_root() -> str:
+    for path in ("/workspace", "/runpod-volume"):
+        if os.path.ismount(path):
+            return path
+    for path in ("/workspace", "/runpod-volume"):
+        if os.path.exists(path):
+            return path
+    return "/workspace"
+
+
+def configure_cache_dirs() -> str:
+    root = resolve_storage_root()
+    hf_home = os.path.join(root, "hf")
+    torch_home = os.path.join(root, "torch")
+
+    os.environ["HF_HOME"] = hf_home
+    os.environ["HF_HUB_CACHE"] = hf_home
+    os.environ["TRANSFORMERS_CACHE"] = hf_home
+    os.environ["TORCH_HOME"] = torch_home
+
+    os.makedirs(hf_home, exist_ok=True)
+    os.makedirs(torch_home, exist_ok=True)
+    return root
+
+
+def log_disk_usage(path: str):
+    try:
+        total, used, free = shutil.disk_usage(path)
+        print(
+            "Disk usage for %s: total=%.1fGB used=%.1fGB free=%.1fGB"
+            % (path, total / (1024**3), used / (1024**3), free / (1024**3))
+        )
+    except FileNotFoundError:
+        print(f"Disk usage for {path}: path not found")
+
+
+STORAGE_ROOT = configure_cache_dirs()
+print(f"Prompt enhancer storage root: {STORAGE_ROOT}")
+log_disk_usage("/workspace")
+log_disk_usage("/runpod-volume")
 
 
 def resolve_torch_dtype():
