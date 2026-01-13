@@ -14,16 +14,15 @@ def _configure_hf_cache():
             hf_home = os.path.join(path, "hf")
             hub_cache = os.path.join(hf_home, "hub")
             xet_cache = os.path.join(hf_home, "xet")
-            transformers_cache = os.path.join(hf_home, "transformers")
             torch_home = os.path.join(path, "torch")
-            for directory in (hf_home, hub_cache, xet_cache, transformers_cache, torch_home):
+            for directory in (hf_home, hub_cache, xet_cache, torch_home):
                 os.makedirs(directory, exist_ok=True)
             os.environ["HF_HOME"] = hf_home
             os.environ["HF_HUB_CACHE"] = hub_cache
             os.environ["HUGGINGFACE_HUB_CACHE"] = hub_cache
             os.environ["HF_XET_CACHE"] = xet_cache
-            os.environ["TRANSFORMERS_CACHE"] = transformers_cache
             os.environ["TORCH_HOME"] = torch_home
+            os.environ.pop("TRANSFORMERS_CACHE", None)
             return path
     return "/runpod-volume"
 
