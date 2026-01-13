@@ -12,11 +12,18 @@ def _configure_hf_cache():
     for path in ("/runpod-volume", "/workspace"):
         if os.path.ismount(path) or os.path.exists(path):
             hf_home = os.path.join(path, "hf")
-            os.makedirs(hf_home, exist_ok=True)
+            hub_cache = os.path.join(hf_home, "hub")
+            xet_cache = os.path.join(hf_home, "xet")
+            transformers_cache = os.path.join(hf_home, "transformers")
+            torch_home = os.path.join(path, "torch")
+            for directory in (hf_home, hub_cache, xet_cache, transformers_cache, torch_home):
+                os.makedirs(directory, exist_ok=True)
             os.environ["HF_HOME"] = hf_home
-            os.environ["HF_HUB_CACHE"] = hf_home
-            os.environ["TRANSFORMERS_CACHE"] = hf_home
-            os.environ["TORCH_HOME"] = os.path.join(path, "torch")
+            os.environ["HF_HUB_CACHE"] = hub_cache
+            os.environ["HUGGINGFACE_HUB_CACHE"] = hub_cache
+            os.environ["HF_XET_CACHE"] = xet_cache
+            os.environ["TRANSFORMERS_CACHE"] = transformers_cache
+            os.environ["TORCH_HOME"] = torch_home
             return path
     return "/runpod-volume"
 
@@ -63,6 +70,9 @@ def log_disk_usage(path: str):
 STORAGE_ROOT = _EARLY_STORAGE_ROOT
 print(f"Prompt enhancer storage root: {STORAGE_ROOT}")
 print(f"HF_HOME={os.environ.get('HF_HOME', 'NOT SET')}")
+print(f"HF_HUB_CACHE={os.environ.get('HF_HUB_CACHE', 'NOT SET')}")
+print(f"HF_XET_CACHE={os.environ.get('HF_XET_CACHE', 'NOT SET')}")
+print(f"TRANSFORMERS_CACHE={os.environ.get('TRANSFORMERS_CACHE', 'NOT SET')}")
 log_disk_usage("/workspace")
 log_disk_usage("/runpod-volume")
 

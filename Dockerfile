@@ -5,10 +5,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
-    HF_HUB_ENABLE_HF_TRANSFER=1 \
-    HF_HOME=/workspace/hf \
-    TRANSFORMERS_CACHE=/workspace/hf \
-    TORCH_HOME=/workspace/torch
+    HF_HUB_ENABLE_HF_TRANSFER=1
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
