@@ -5,6 +5,23 @@ import time
 import shutil
 from typing import Optional
 
+# Configure HuggingFace cache BEFORE importing transformers
+# This must happen before any HF imports to take effect
+def _configure_hf_cache():
+    """Set HF cache to network volume before transformers import."""
+    for path in ("/runpod-volume", "/workspace"):
+        if os.path.ismount(path) or os.path.exists(path):
+            hf_home = os.path.join(path, "hf")
+            os.makedirs(hf_home, exist_ok=True)
+            os.environ["HF_HOME"] = hf_home
+            os.environ["HF_HUB_CACHE"] = hf_home
+            os.environ["TRANSFORMERS_CACHE"] = hf_home
+            os.environ["TORCH_HOME"] = os.path.join(path, "torch")
+            return path
+    return "/runpod-volume"
+
+_EARLY_STORAGE_ROOT = _configure_hf_cache()
+
 import requests
 import runpod
 import torch
@@ -31,32 +48,6 @@ PROCESSOR = None
 SYSTEM_PROMPT_CACHE: Optional[str] = None
 
 
-def resolve_storage_root() -> str:
-    # Prioritize /runpod-volume over /workspace for network volume storage
-    for path in ("/runpod-volume", "/workspace"):
-        if os.path.ismount(path):
-            return path
-    for path in ("/runpod-volume", "/workspace"):
-        if os.path.exists(path):
-            return path
-    return "/runpod-volume"
-
-
-def configure_cache_dirs() -> str:
-    root = resolve_storage_root()
-    hf_home = os.path.join(root, "hf")
-    torch_home = os.path.join(root, "torch")
-
-    os.environ["HF_HOME"] = hf_home
-    os.environ["HF_HUB_CACHE"] = hf_home
-    os.environ["TRANSFORMERS_CACHE"] = hf_home
-    os.environ["TORCH_HOME"] = torch_home
-
-    os.makedirs(hf_home, exist_ok=True)
-    os.makedirs(torch_home, exist_ok=True)
-    return root
-
-
 def log_disk_usage(path: str):
     try:
         total, used, free = shutil.disk_usage(path)
@@ -68,8 +59,10 @@ def log_disk_usage(path: str):
         print(f"Disk usage for {path}: path not found")
 
 
-STORAGE_ROOT = configure_cache_dirs()
+# Use the storage root configured before transformers import
+STORAGE_ROOT = _EARLY_STORAGE_ROOT
 print(f"Prompt enhancer storage root: {STORAGE_ROOT}")
+print(f"HF_HOME={os.environ.get('HF_HOME', 'NOT SET')}")
 log_disk_usage("/workspace")
 log_disk_usage("/runpod-volume")
 
