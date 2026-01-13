@@ -32,13 +32,14 @@ SYSTEM_PROMPT_CACHE: Optional[str] = None
 
 
 def resolve_storage_root() -> str:
-    for path in ("/workspace", "/runpod-volume"):
+    # Prioritize /runpod-volume over /workspace for network volume storage
+    for path in ("/runpod-volume", "/workspace"):
         if os.path.ismount(path):
             return path
-    for path in ("/workspace", "/runpod-volume"):
+    for path in ("/runpod-volume", "/workspace"):
         if os.path.exists(path):
             return path
-    return "/workspace"
+    return "/runpod-volume"
 
 
 def configure_cache_dirs() -> str:
